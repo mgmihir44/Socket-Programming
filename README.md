@@ -24,3 +24,4 @@ Parameters:
 
 Limitations:
   The server can handle only one client connection currently.
+  Some values are hardcoded
