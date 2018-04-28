@@ -9,3 +9,18 @@ Description:
 Limitations:
   No error handling is implemented yet.
   The server can handle only one client connection.
+  
+2. A simple Echo Client Server Application using TCP Sockets.
+
+Description:
+  The server starts waiting for connections. Once a client connects to a server,the server is waiting for a message to be 
+  received from the client. The server displays message received from the client and sends/echos it back to the client.
+  The client start by connection to the server. The client asks the user to enter a message to send to the server and
+  displays the mesaage received from the server.
+  
+Parameters:
+  Server: Port number
+  Client: IP address of the server and the port number
+
+Limitations:
+  The server can handle only one client connection currently.
