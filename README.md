@@ -15,7 +15,7 @@ Limitations:
 Description:
   The server starts waiting for connections. Once a client connects to a server, the server is waiting for a message 
   to be received from the client. The server displays message received from the client and sends/echoes it back to 
-  the client. The client starts by connection to the server. The client asks the user to enter a message to send to 
+  the client. The client starts by connecting to the server. The client asks the user to enter a message to send to 
   the server and displays the message received from the server.
   
 Parameters:
@@ -25,3 +25,20 @@ Parameters:
 Limitations:
   The server can handle only one client connection currently.
   Some values are hardcoded
+
+3. A Multi Process Server Clinet Application using TCP Sockets
+
+Description:
+  The server starts waiting for connections. Once a client connects to the server, a new process is created to handle
+  the client. Hence, multiple clients can connect to the server simultaneously. The server displays the message received
+  from the client and prompts the user to enter a message to send to the client. Similarly, the client connects to the 
+  server and prompts the user to enter a message to send to the server. The client also displays the message received 
+  from the server.
+
+Parameters:
+  Server: Port number
+  Client: IP address of the server and the port number
+
+Limitations:
+  Currently, we do not have any efficient way to terminate server or client.
+  A Process is created to handle each client connection instead of a thread.
