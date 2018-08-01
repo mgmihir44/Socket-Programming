@@ -92,6 +92,11 @@ int main(int argc, char * argv[]){
 
 				recv_buf[input] = '\0';		/* Null terminate the string */
 				fprintf(stdout, "Received from Client: %s\n", recv_buf);
+		
+				/* Exit if client want to ternimate */
+				if(strncmp("Exit" == recv_buf) == 0){
+					break;
+				}
 
 				/* Response to send to clinet */
 				fprintf(stdout, "Message for Client: ");
