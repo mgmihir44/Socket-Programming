@@ -30,7 +30,7 @@ void error(const char * message);	/* Print error message and terminate */
 int main(int argc, char * argv[]){
 
 	if(argc != 2){
-		fprintf(stderr, "Usage: %s Port No", argv[1]);
+		fprintf(stderr, "Usage: %s Port No\n", argv[0]);
 		exit(1);
 	}
 
@@ -52,6 +52,9 @@ int main(int argc, char * argv[]){
 	server.sin_addr.s_addr = INADDR_ANY;		/* Listen on all local interfaces of the host machine */
 
 	/* Make socket reusable */
+	/* We are using sockets at API level, so second parameter to
+	 * the function should be SOL_SOCKET
+	 */
 	if(setsockopt(server_soc, SOL_SOCKET, SO_REUSEADDR, &(int){1}, sizeof(int)) < 0){
 		error("Cannot make socket reusable");
 	}
@@ -66,54 +69,43 @@ int main(int argc, char * argv[]){
 		error("Cannot listen for connections");
 	}
 
+	/* Accept connections from client */
+	client_soc = accept(server_soc, (struct sockaddr *)&client, &client_length);
+	if(client_soc < 0){
+		error("Cannot accept connections");
+	}
+
+	/* Display client details */
+	fprintf(stdout, "Client connected with IP Address: %s\n", inet_ntoa(client.sin_addr));
+	fprintf(stdout, "Client port number: %d\n", ntohs(client.sin_port));
+
 	while(1){
-		/* Accept connections from client */
-		client_soc = accept(server_soc, (struct sockaddr *)&client, &client_length);
-		if(client_soc < 0){
-			error("Cannot accept connections");
+		int input;
+		/* Receive data from clients */
+		if((input = recv(client_soc, recv_buf, BUFFER, 0)) < 0){
+			error("Error is receiving data from client");
 		}
 
-		/* Display client details */
-		fprintf(stdout, "Client connected with IP Address: %s\n", inet_ntoa(client.sin_addr));
-		fprintf(stdout, "Client port number: %d\n", ntohs(client.sin_port));
-
-		/* Create a seperate process for each client connection */
-		multi_client = fork();
-		if(multi_client = 0){
-			/* close the socket */
-			close(server_soc);
-
-			while(1){
-				int input;
-				/* Receive data from clients */
-				if((input = recv(client_soc, recv_buf, BUFFER, 0)) < 0){
-					error("Error is receiving data from client");
-				}
-
-				recv_buf[input] = '\0';		/* Null terminate the string */
-				fprintf(stdout, "Received from Client: %s\n", recv_buf);
+		recv_buf[input] = '\0';		/* Null terminate the string */
+		fprintf(stdout, "Received from Client: %s\n", recv_buf);
 		
-				/* Exit if client want to ternimate */
-				if(strncmp("Exit" == recv_buf) == 0){
-					break;
-				}
-
-				/* Response to send to clinet */
-				fprintf(stdout, "Message for Client: ");
-				fgets(send_buf, BUFFER, stdin);
-
-				/* Send response to client */
-				if(send(client_soc, send_buf, strlen(send_buf), 0) < 0){
-					error("Send Error");
-				}
-			}
+		/* Exit if client want to ternimate */
+		if(strcmp("Exit", recv_buf) == 0){
+			break;
 		}
-		else if(multi_client < 0){
-			error("fork error");
+
+		/* Response to send to clinet */
+		fprintf(stdout, "Message for Client: ");
+		fgets(send_buf, BUFFER, stdin);
+
+		/* Send response to client */
+		if(send(client_soc, send_buf, strlen(send_buf), 0) < 0){
+			error("Send Error");
 		}
 	}
+		
 	close(client_soc);
-
+	close(server_soc);
 	return 0;
 }
 
