@@ -48,7 +48,7 @@ int main(int argc, char * argv[]){
 
 	/* Initialize the connection parameters */
 	server.sin_family = AF_INET;			/* Working with IPv4 */
-	server.sin_family = htons(atoi(argv[1]));	/* Initialize server on Port provided by user */
+	server.sin_port = htons(atoi(argv[1]));	/* Initialize server on Port provided by user */
 	server.sin_addr.s_addr = INADDR_ANY;		/* Listen on all local interfaces of the host machine */
 
 	/* Make socket reusable */
@@ -69,6 +69,8 @@ int main(int argc, char * argv[]){
 		error("Cannot listen for connections");
 	}
 
+	fprintf(stdout, "Server started on Port No: %d\n", atoi(argv[1]));
+	
 	/* Accept connections from client */
 	client_soc = accept(server_soc, (struct sockaddr *)&client, &client_length);
 	if(client_soc < 0){
@@ -90,7 +92,7 @@ int main(int argc, char * argv[]){
 		fprintf(stdout, "Received from Client: %s\n", recv_buf);
 		
 		/* Exit if client want to ternimate */
-		if(strcmp("Exit", recv_buf) == 0){
+		if(strncmp("Exit", recv_buf, 4) == 0){
 			break;
 		}
 
