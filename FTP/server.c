@@ -3,8 +3,11 @@
  *
  * Date: 07/30/2018
  *
+ * Date Modified: 08/14/2018
+ *
  * Description: A simple server application. This application will start listening on the local host
- *		machine on the port number specified as an argument.
+ *		machine on the port number specified as an argument and ask the client for 
+ * 		two number and the arithmetic operation to perform
  */
 
 /*********************************** Includes Section **********************************************/
@@ -34,9 +37,9 @@ int main(int argc, char * argv[]){
 		exit(1);
 	}
 
-	char recv_buf[BUFFER];				/* Buffer to store data received from client */
-	char send_buf[BUFFER];				/* Holds data to send to client */
+	int value_one, value_two, result, operation;	/* Buffer to Store the operation, values and the result*/
 	struct sockaddr_in server, client;		/* Store client and server details */
+	int w_fd, r_fd;					/* File descriptors for read and write operations */
 	socklen_t client_length;
 	int server_soc, client_soc;
 	pid_t multi_client;
@@ -81,32 +84,87 @@ int main(int argc, char * argv[]){
 	fprintf(stdout, "Client connected with IP Address: %s\n", inet_ntoa(client.sin_addr));
 	fprintf(stdout, "Client port number: %d\n", ntohs(client.sin_port));
 
-	while(1){
-		int input;
-		/* Receive data from clients */
-		if((input = recv(client_soc, recv_buf, BUFFER, 0)) < 0){
-			error("Error is receiving data from client");
-		}
-
-		recv_buf[input] = '\0';		/* Null terminate the string */
-		fprintf(stdout, "Received from Client: %s\n", recv_buf);
-		
-		/* Exit if client want to ternimate */
-		if(strncmp("Exit", recv_buf, 4) == 0){
-			break;
-		}
-
-		/* Response to send to clinet */
-		fprintf(stdout, "Message for Client: ");
-		fgets(send_buf, BUFFER, stdin);
-
-		/* Send response to client */
-		if(send(client_soc, send_buf, strlen(send_buf), 0) < 0){
-			error("Send Error");
-		}
+	/* Ask client for the first value */
+Loop:	w_fd = write(client_soc, "Enter First Value: ", strlen("Enter First Value: "));
+	if(w_fd < 0){
+		error("Cannot write to socket");
+		exit(1);
 	}
-		
-	close(client_soc);
+
+	/* Read first value from client */
+	r_fd = read(client_soc, &value_one, sizeof(int));
+	if(r_fd < 0){
+		error("Cannot read data from socket");
+		exit(1);
+	}	
+	fprintf(stdout, "First Value: %d\n", value_one);
+	
+	/* Ask client for the second value */
+	w_fd = write(client_soc, "Enter Second Value: ", strlen("Enter Second Value: "));
+	if(w_fd < 0){
+		error("Cannot write to socket");
+		exit(1);
+	}
+
+	/* Read second value from client */
+	r_fd = read(client_soc, &value_two, sizeof(int));
+	if(r_fd < 0){
+		error("Cannot read data from socket");
+		exit(1);
+	}
+	fprintf(stdout, "Second Value: %d\n", value_two);
+	
+	/* Ask client for operation to perform */
+	w_fd = write(client_soc, "Operation to perform:\n1.Addition\n2.Subtraction\n3.Multiplication\n4.Division\n5.Exit ", strlen("Operation to perform:\n 1.Addition\n2.Subtraction\n3.Multiplication\n4.Division\n5.Exit "));
+	if(w_fd < 0){
+		error("Cannot write to socket");
+		exit(1);
+	}	
+	
+	/* Read Operation to perform from client */
+	r_fd = read(client_soc, &operation, sizeof(int));
+	if(r_fd < 0){
+		error("Cannot read data from socket");
+		exit(1);
+	}
+	fprintf(stdout, "Client Choice: %d\n", operation);	
+
+	/* Perform the desired operation based on client choice */
+	switch(operation){
+		case 1:
+			result = value_one + value_two;
+			break;
+
+		case 2:
+			result = value_one - value_two;
+			break;
+
+		case 3:
+			result = value_one * value_two;
+			break;
+
+		case 4:
+			result = value_one / value_two;
+			break;
+
+		case 5:
+			goto E;
+			break;
+	
+	}
+
+	/* Send result back to client */
+	w_fd = write(client_soc, &result, sizeof(int));
+	if(w_fd < 0){
+		error("Cannot write to socket");
+		exit(1);
+	}
+
+	if(operation != 5){
+		goto Loop;
+	}
+
+E:	close(client_soc);
 	close(server_soc);
 	return 0;
 }

@@ -35,7 +35,7 @@ int main(int argc, char * argv[]){
 		exit(1);
 	}
 
-	char send_buf[BUFFER];				/* Holds the data to be sent */
+	int value_one, value_two, operation, result;	/* Holds the value to be sent, operation and result */
 	char recv_buf[BUFFER];				/* Holds the received data */
 	int client_soc, server_soc;
 	struct sockaddr_in client;
@@ -60,32 +60,71 @@ int main(int argc, char * argv[]){
 	fprintf(stdout, "Connected to Server with IP: %s\n", argv[1]);
 	fprintf(stdout, "Connected on Port No: %d\n", atoi(argv[2]));
 
-	while(1){
-		printf("Client: ");
-		fgets(send_buf, BUFFER, stdin);		/* Message to send to server */
+	/* Receive data from the server */
+Loop:	if((server_soc = recv(client_soc, recv_buf, BUFFER, 0)) <  0){
+		error("Cannot receive data from client");
+		exit(1);
+	}
+	recv_buf[server_soc] = '\0';
+	fprintf(stdout, "%s", recv_buf);
+
+	scanf("%d", &value_one);		/* First Value to send to server */
 		
-		/* Send data to the server */
-		if((send(client_soc, send_buf, strlen(send_buf), 0)) < 0){
-			error("Cannot send data to server");
-			exit(1);
-		}
-
-		/* Receive data from the server */
-		if((server_soc = recv(client_soc, recv_buf, BUFFER, 0)) <  0){
-			error("Cannot receive data from client");
-			exit(1);
-		}
-
-		recv_buf[server_soc] = '\0';
-		
-		fprintf(stdout, "Server: %s\n", recv_buf);
-
-		/* Exit if server wants to terminate the connection */
-		if(strncmp("Exit", recv_buf, 4) == 0){
-			break;
-		}
+	/* Send data to the server */
+	if((send(client_soc, &value_one, sizeof(int), 0)) < 0){
+		error("Cannot send data to server");
+		exit(1);
 	}
 
+	/* Receive data from the server */
+	if((server_soc = recv(client_soc, recv_buf, BUFFER, 0)) <  0){
+		error("Cannot receive data from client");
+		exit(1);
+	}
+	recv_buf[server_soc] = '\0';
+	fprintf(stdout, "%s", recv_buf);
+
+	scanf("%d", &value_two);		/* Second Value to send to server */
+
+	/* Send data to the server */
+	if((send(client_soc, &value_two, sizeof(int), 0)) < 0){
+		error("Cannot send data to server");
+		exit(1);
+	}
+
+	/* Receive data from the server */
+	if((server_soc = recv(client_soc, recv_buf, BUFFER, 0)) <  0){
+		error("Cannot receive data from client");
+		exit(1);
+	}
+	recv_buf[server_soc] = '\0';
+	fprintf(stdout, "%s\n", recv_buf);
+
+	scanf("%d", &operation);		/* Operation to be performed by the server */
+
+	if(operation == 5){
+		goto E;
+	}
+
+	/* Send it to the server */
+	if((send(client_soc, &operation, sizeof(int), 0)) < 0){
+		error("Cannot send data to server");
+		exit(1);
+	}
+	
+	/* Receive result from the server */
+	if((server_soc = recv(client_soc, &result, sizeof(int), 0)) <  0){
+		error("Cannot receive data from client");
+		exit(1);
+	}
+	fprintf(stdout, "The result is : %d\n", result);
+
+	if(operation != 5){
+		goto Loop;
+	}
+
+	/* Exit if server wants to terminat */
+E:	printf("Exiting the application\n");
 	close(server_soc);
 	close(client_soc);
 	
